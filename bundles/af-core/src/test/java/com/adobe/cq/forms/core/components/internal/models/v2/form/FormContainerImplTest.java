@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.adobe.aemds.guide.service.CoreComponentCustomPropertiesProvider;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.i18n.ResourceBundleProvider;
 import org.apache.sling.testing.mock.sling.MockResourceBundle;
@@ -489,5 +490,34 @@ public class FormContainerImplTest {
     public void testGetIsHamburgerMenuEnabled() {
         FormContainer formContainer = Utils.getComponentUnderTest(PATH_FORM_1, FormContainer.class, context);
         assertFalse(Boolean.valueOf(formContainer.getIsHamburgerMenuEnabled().toString()));
+    }
+
+    /**
+     * Test to check if the properties are fetched from the CoreComponentCustomPropertiesProvider are part of form container properties or not
+     * Also, if same properties is set in form container, then it should override the properties from CoreComponentCustomPropertiesProvider
+     * @throws Exception
+     */
+    @Test
+    void testGetPropertiesForCoreComponentCustomPropertiesProvider() throws Exception {
+        CoreComponentCustomPropertiesProvider coreComponentCustomPropertiesProvider = Mockito.mock(CoreComponentCustomPropertiesProvider.class);
+        FormContainer formContainer = Utils.getComponentUnderTest(PATH_FORM_1, FormContainer.class, context);
+        Utils.setInternalState(formContainer, "coreComponentCustomPropertiesProvider", coreComponentCustomPropertiesProvider);
+        Mockito.when(coreComponentCustomPropertiesProvider.getProperties()).thenReturn(new HashMap<String, Object>() {
+            {
+                put("fd:changeEventBehaviour", "deps");
+                put("customProp", "customValue");
+            }
+        });
+        assertEquals("deps", formContainer.getProperties().get("fd:changeEventBehaviour"));
+        assertEquals("customPropValue", formContainer.getProperties().get("customProp"));
+    }
+
+    @Test
+    void testGetPropertiesForCoreComponentCustomPropertiesProviderForNull() throws Exception {
+        CoreComponentCustomPropertiesProvider coreComponentCustomPropertiesProvider = Mockito.mock(CoreComponentCustomPropertiesProvider.class);
+        FormContainer formContainer = Utils.getComponentUnderTest(PATH_FORM_1, FormContainer.class, context);
+        Utils.setInternalState(formContainer, "coreComponentCustomPropertiesProvider", coreComponentCustomPropertiesProvider);
+        Mockito.when(coreComponentCustomPropertiesProvider.getProperties()).thenReturn(null);
+        assertEquals("customPropValue", formContainer.getProperties().get("customProp"));
     }
 }
